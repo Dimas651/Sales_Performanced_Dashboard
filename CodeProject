@@ -1,0 +1,72 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import plotly.express as px
+
+# Load dataset
+df = pd.read_csv("sales_data_sample.csv", encoding='latin1')
+
+# Konversi kolom ORDERDATE ke datetime
+df['ORDERDATE'] = pd.to_datetime(df['ORDERDATE'])
+
+# Buat kolom bulan sebagai datetime
+df['Month'] = df['ORDERDATE'].dt.to_period('M').dt.to_timestamp()
+
+# -------------------------------
+# 1. Eksplorasi Data Awal (EDA)
+# -------------------------------
+print("Informasi Umum Dataset:")
+print(df.info())
+print("\nStatistik Deskriptif:")
+print(df.describe())
+print("\nContoh Data:")
+print(df.head())
+
+# -------------------------------
+# 2. Pembersihan Data
+# -------------------------------
+print("\nMissing Values per Kolom:")
+print(df.isnull().sum())
+
+# -------------------------------
+# 3. Agregasi dan Transformasi
+# -------------------------------
+monthly_sales = df.groupby('Month')['SALES'].sum().reset_index()
+category_sales = df.groupby('PRODUCTLINE')['SALES'].sum().reset_index()
+region_sales = df.groupby('COUNTRY')['SALES'].sum().reset_index()
+top_products = df.groupby('PRODUCTCODE')['SALES'].sum().reset_index().sort_values(by='SALES', ascending=False).head(10)
+
+# -------------------------------
+# 4. Visualisasi Data
+# -------------------------------
+
+# Tren penjualan bulanan
+plt.figure(figsize=(10, 6))
+sns.lineplot(data=monthly_sales, x='Month', y='SALES', marker='o')
+plt.title('Tren Penjualan Bulanan')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+# Penjualan per kategori produk
+plt.figure(figsize=(10, 6))
+sns.barplot(data=category_sales, x='PRODUCTLINE', y='SALES')
+plt.title('Penjualan per Kategori Produk')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+# Pie chart kontribusi penjualan per negara
+fig = px.pie(region_sales, names='COUNTRY', values='SALES', title='Kontribusi Penjualan per Negara')
+fig.show()
+
+# Heatmap korelasi antar variabel numerik
+plt.figure(figsize=(10, 6))
+sns.heatmap(df.corr(numeric_only=True), annot=True, cmap='coolwarm')
+plt.title('Korelasi Antar Variabel')
+plt.tight_layout()
+plt.show()
+
+# Top 10 produk terlaris
+print("\nTop 10 Produk dengan Penjualan Tertinggi:")
+print(top_products)
